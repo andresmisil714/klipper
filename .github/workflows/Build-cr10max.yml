@@ -1,0 +1,42 @@
+name: Build Klipper CR-10 Max
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - master
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v3
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gcc-arm-none-eabi make cmake libncurses-dev python3
+
+      - name: Configure firmware
+        run: |
+          make menuconfig <<EOF
+          # Placa Creality 4.2.x (STM32F103)
+          # Bootloader de 28 KiB
+          # Comunicación por USB
+          #
+          # Opciones específicas:
+          #   - Extrusor directo BMG
+          #   - Cama grande (CR-10 Max)
+          #
+          EOF
+
+      - name: Build firmware
+        run: make -j4
+
+      - name: Upload firmware
+        uses: actions/upload-artifact@v3
+        with:
+          name: klipper-cr10max
+          path: out/klipper.bin
