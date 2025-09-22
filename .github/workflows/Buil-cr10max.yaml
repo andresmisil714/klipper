@@ -1,0 +1,41 @@
+name: Build Klipper CR-10 Max (Creality 4.2.x)
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - master
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Descargar repositorio
+        uses: actions/checkout@v3
+
+      - name: Instalar dependencias
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gcc-arm-none-eabi binutils-arm-none-eabi make python3
+
+      - name: Configurar Klipper (CR-10 Max 4.2.x)
+        run: |
+          make clean
+          cat > .config <<EOF
+          CONFIG_MCU="stm32f103"
+          CONFIG_CLOCK_REF_8MHZ=y
+          CONFIG_STM32F1xx=y
+          CONFIG_FLASH_START=0x08007000
+          CONFIG_FLASH_SIZE=0x00070000
+          CONFIG_USART1=y
+          CONFIG_SERIAL_PORT="PA10/PA9"
+          EOF
+
+      - name: Compilar firmware
+        run: make -j4
+
+      - name: Guardar firmware.bin
+        uses: actions/upload-artifact@v3
+        with:
+          name: firmware-cr10max
+          path: out/klipper.bin
